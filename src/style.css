@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0b1220;
+  --color-card: rgba(255,255,255,0.06);
+}
+
+html, body, #app {
+  height: 100%;
+}
+
+body {
+  @apply m-0 bg-[var(--color-bg)] text-white;
+}
+
+.glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.15),
+    rgba(255,255,255,0.05)
+  );
+  @apply backdrop-blur-md border border-white/10 rounded-xl;
+}
