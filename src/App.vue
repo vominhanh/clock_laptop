@@ -5,7 +5,7 @@ import TaskList from './components/TaskList.vue'
 import MusicPlayer from './components/MusicPlayer.vue'
 import musicService from './services/musicService.js'
 
-const mode = ref('up') // 'up' | 'down'
+const mode = ref('down') // 'up' | 'down'
 const startSeconds = ref(0)
 const currentView = ref('timer') // 'timer', 'tasks', 'music'
 
@@ -125,83 +125,86 @@ function rewind() {
     <div id="youtube-player" class="hidden"></div>
     
     <!-- Sidebar bên trái -->
-    <div class="fixed left-0 top-0 h-full w-16 bg-gradient-to-b from-gray-900/90 to-gray-800/90 backdrop-blur-sm border-r border-white/10 flex flex-col items-center py-6 z-20">
-      <!-- Tasks -->
-      <div class="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center mb-6 cursor-pointer" @click="currentView = 'tasks'">
-        <span class="text-white font-bold text-sm">M</span>
+    <div class="fixed left-0 top-0 h-full w-20 bg-gradient-to-b from-gray-900/95 to-gray-800/95 backdrop-blur-xl border-r border-white/10 flex flex-col items-center py-8 z-20">
+      <!-- Main Menu (Pink M) -->
+      <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-400 rounded-xl flex items-center justify-center mb-8 cursor-pointer hover:from-pink-400 hover:to-pink-300 transition-all duration-300 shadow-lg hover:shadow-pink-500/25" @click="currentView = 'timer'">
+        <span class="text-white font-bold text-lg">M</span>
       </div>
       
-      <!-- Pen -->
-      <div class="w-8 h-8 text-white/70 hover:text-white mb-4 cursor-pointer">
-        <svg fill="currentColor" viewBox="0 0 24 24">
+      <!-- Edit/Pencil -->
+      <div class="w-10 h-10 text-white/60 hover:text-white mb-6 cursor-pointer transition-all duration-300 hover:scale-110 flex items-center justify-center">
+        <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
           <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
         </svg>
       </div>
       
-      <!-- Heart -->
-      <div class="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center mb-4 cursor-pointer">
-        <svg fill="white" viewBox="0 0 24 24" class="w-4 h-4">
-          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      <!-- Download/Arrow Down -->
+      <div class="w-10 h-10 text-white/60 hover:text-white mb-6 cursor-pointer transition-all duration-300 hover:scale-110 flex items-center justify-center">
+        <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+          <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
         </svg>
       </div>
       
-      <!-- Document -->
-      <div class="w-8 h-8 text-white/70 hover:text-white mb-4 cursor-pointer">
-        <svg fill="currentColor" viewBox="0 0 24 24">
+      <!-- Chat/Speech Bubble -->
+      <div class="w-10 h-10 text-white/60 hover:text-white mb-6 cursor-pointer transition-all duration-300 hover:scale-110 flex items-center justify-center">
+        <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+          <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+        </svg>
+      </div>
+      
+      <!-- Document/List -->
+      <div class="w-10 h-10 text-white/60 hover:text-white mb-6 cursor-pointer transition-all duration-300 hover:scale-110 flex items-center justify-center">
+        <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
           <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM16 18H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
         </svg>
       </div>
       
-      <!-- People -->
-      <div class="w-8 h-8 text-white/70 hover:text-white mb-4 cursor-pointer">
-        <svg fill="currentColor" viewBox="0 0 24 24">
-          <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H17c-.8 0-1.54.37-2.01 1l-1.7 2.26V16h-1.5v6h6zM12.5 11.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S11 9.17 11 10s.67 1.5 1.5 1.5zM5.5 6c1.11 0 2-.89 2-2s-.89-2-2-2-2 .89-2 2 .89 2 2 2zm2 16v-7H9V9c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v6h1.5v7h4z"/>
-        </svg>
-      </div>
-      
-      <!-- Circle -->
-      <div class="w-8 h-8 text-white/70 hover:text-white mb-4 cursor-pointer">
-        <svg fill="currentColor" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10"/>
-        </svg>
-      </div>
-      
       <!-- Flag -->
-      <div class="w-8 h-8 text-white/70 hover:text-white mb-4 cursor-pointer">
-        <svg fill="currentColor" viewBox="0 0 24 24">
+      <div class="w-10 h-10 text-white/60 hover:text-white mb-6 cursor-pointer transition-all duration-300 hover:scale-110 flex items-center justify-center">
+        <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
           <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/>
         </svg>
       </div>
       
-      <!-- Music -->
-      <div class="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center mb-4 cursor-pointer" @click="currentView = 'music'">
-        <svg fill="white" viewBox="0 0 24 24" class="w-4 h-4">
-          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+      <!-- Heart (Pink) -->
+      <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-400 rounded-xl flex items-center justify-center mb-6 cursor-pointer hover:from-pink-400 hover:to-pink-300 transition-all duration-300 shadow-lg hover:shadow-pink-500/25" @click="currentView = 'music'">
+        <svg fill="white" viewBox="0 0 24 24" class="w-6 h-6">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
         </svg>
       </div>
       
-      <!-- Bell -->
-      <div class="w-8 h-8 text-white/70 hover:text-white mb-4 cursor-pointer">
-        <svg fill="currentColor" viewBox="0 0 24 24">
+      <!-- Bell/Notifications -->
+      <div class="w-10 h-10 text-white/60 hover:text-white mb-6 cursor-pointer transition-all duration-300 hover:scale-110 flex items-center justify-center">
+        <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
           <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
         </svg>
       </div>
       
-      <!-- Profile -->
-      <div class="w-8 h-8 text-white/70 hover:text-white mb-4 cursor-pointer">
-        <svg fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      <!-- Small Circle -->
+      <div class="w-3 h-3 bg-white/40 rounded-full mb-6"></div>
+      
+      <!-- People/Users -->
+      <div class="w-10 h-10 text-white/60 hover:text-white mb-6 cursor-pointer transition-all duration-300 hover:scale-110 flex items-center justify-center">
+        <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+          <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H17c-.8 0-1.54.37-2.01 1l-1.7 2.26V16h-1.5v6h6zM12.5 11.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S11 9.17 11 10s.67 1.5 1.5 1.5zM5.5 6c1.11 0 2-.89 2-2s-.89-2-2-2-2 .89-2 2 .89 2 2 2zm2 16v-7H9V9c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v6h1.5v7h4z"/>
+        </svg>
+      </div>
+      
+      <!-- Clipboard/Tasks -->
+      <div class="w-10 h-10 text-white/60 hover:text-white mb-6 cursor-pointer transition-all duration-300 hover:scale-110 flex items-center justify-center" @click="currentView = 'tasks'">
+        <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+          <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
         </svg>
       </div>
       
       <!-- Home URL -->
-      <div class="mt-auto text-white/50 text-xs text-center px-2">
+      <div class="mt-auto text-white/40 text-xs text-center px-2 leading-tight">
         https://app.csw.live/home
       </div>
     </div>
     
     <!-- Main content -->
-    <div class="ml-16 p-6">
+    <div class="ml-20 p-6">
       <!-- Top row -->
       <div class="flex gap-6 mb-6">
         <!-- Task Collection Widget -->
@@ -254,7 +257,7 @@ function rewind() {
     </div>
     
     <!-- Music Player Widget (Bottom Right) - Always visible when playing -->
-    <div v-if="showMusicWidget" class="fixed bottom-6 right-6 glass p-6 rounded-2xl w-96 z-10">
+    <div v-if="showMusicWidget" class="fixed bottom-6 right-6 glass p-6 rounded-2xl w-96 z-10 shadow-2xl">
       <!-- Close button -->
       <button @click="closeMusicPlayer" class="absolute top-3 right-3 w-6 h-6 text-white/70 hover:text-white transition-colors">
         <svg fill="currentColor" viewBox="0 0 24 24">

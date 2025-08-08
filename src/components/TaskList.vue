@@ -30,23 +30,34 @@ function pick(task) {
 </script>
 
 <template>
-  <div class="glass p-8 rounded-2xl w-full max-w-2xl mx-auto">
-    <h2 class="text-2xl font-bold mb-6 text-center">Task trong ngày</h2>
+  <div class="glass p-8 rounded-2xl w-full max-w-2xl mx-auto shadow-2xl">
+    <h2 class="text-2xl font-bold mb-8 text-center text-white">Task trong ngày</h2>
     
-    <div class="space-y-3 max-h-64 overflow-auto pr-2 mb-6">
-      <div v-for="t in tasks" :key="t.id" class="flex items-center justify-between bg-white/5 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200">
+    <!-- Task List -->
+    <div class="space-y-4 max-h-80 overflow-auto pr-2 mb-8">
+      <div 
+        v-for="t in tasks" 
+        :key="t.id" 
+        class="flex items-center justify-between bg-white/5 px-6 py-4 rounded-xl hover:bg-white/10 transition-all duration-200 border border-white/5 hover:border-white/10"
+      >
         <div class="flex-1">
-          <div class="font-semibold text-lg">{{ t.title }}</div>
+          <div class="font-semibold text-xl text-white mb-2">{{ t.title }}</div>
           <div class="text-white/70 text-sm flex items-center gap-2">
             <svg fill="currentColor" viewBox="0 0 24 24" class="w-4 h-4">
               <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
               <path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
             </svg>
-            {{ t.start }} → {{ t.end }}
+            <span class="font-medium">{{ t.start }} → {{ t.end }}</span>
+            <span class="text-pink-400 font-semibold">
+              ({{ Math.max(0, toSeconds(t.end) - toSeconds(t.start)) / 3600 }}h {{ Math.max(0, toSeconds(t.end) - toSeconds(t.start)) % 3600 / 60 }}m)
+            </span>
           </div>
         </div>
-        <button class="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-cyan-400 text-black font-semibold hover:from-cyan-400 hover:to-cyan-300 transition-all duration-200 shadow-lg" @click="pick(t)">
-          <svg fill="currentColor" viewBox="0 0 24 24" class="w-4 h-4 inline mr-1">
+        <button 
+          class="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-400 text-black font-semibold hover:from-cyan-400 hover:to-cyan-300 transition-all duration-200 shadow-lg flex items-center gap-2" 
+          @click="pick(t)"
+        >
+          <svg fill="currentColor" viewBox="0 0 24 24" class="w-4 h-4">
             <path d="M8 5v14l11-7z"/>
           </svg>
           Chọn
@@ -54,16 +65,35 @@ function pick(task) {
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-      <input v-model="newTask.title" class="md:col-span-2 px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10 placeholder-white/50" placeholder="Tên task" />
-      <input v-model="newTask.start" type="time" class="px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10" />
-      <input v-model="newTask.end" type="time" class="px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10" />
-      <button class="md:col-span-4 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 text-black font-semibold hover:from-emerald-400 hover:to-emerald-300 transition-all duration-200 shadow-lg" @click="addTask">
-        <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5 inline mr-2">
-          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-        </svg>
-        Thêm task
-      </button>
+    <!-- Add New Task Form -->
+    <div class="bg-white/5 rounded-xl p-6 border border-white/10">
+      <h3 class="text-lg font-semibold mb-4 text-white">Thêm task mới</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <input 
+          v-model="newTask.title" 
+          class="md:col-span-2 px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10 placeholder-white/50 text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 transition-all duration-200" 
+          placeholder="Tên task" 
+        />
+        <input 
+          v-model="newTask.start" 
+          type="time" 
+          class="px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 transition-all duration-200" 
+        />
+        <input 
+          v-model="newTask.end" 
+          type="time" 
+          class="px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-pink-500/50 transition-all duration-200" 
+        />
+        <button 
+          class="md:col-span-4 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 text-black font-semibold hover:from-emerald-400 hover:to-emerald-300 transition-all duration-200 shadow-lg flex items-center justify-center gap-2" 
+          @click="addTask"
+        >
+          <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          Thêm task
+        </button>
+      </div>
     </div>
   </div>
 </template>
