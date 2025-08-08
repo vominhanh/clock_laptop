@@ -1,12 +1,57 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, provide, onMounted, onBeforeUnmount } from 'vue'
 import Timer from './components/Timer.vue'
 import TaskList from './components/TaskList.vue'
 import MusicPlayer from './components/MusicPlayer.vue'
+import musicService from './services/musicService.js'
 
 const mode = ref('up') // 'up' | 'down'
 const startSeconds = ref(0)
 const currentView = ref('timer') // 'timer', 'tasks', 'music'
+
+// Music player state - sync with global service
+const musicState = ref({
+  isPlaying: false,
+  currentTime: 0,
+  duration: 0,
+  title: 'Những Cơn Đau Ngày Đi',
+  url: 'https://www.youtube.com/watc',
+  thumbnail: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop&crop=center'
+})
+
+// Separate state for widget visibility
+const showMusicWidget = ref(false)
+
+// Provide global music state để các components khác có thể access
+provide('musicState', musicState)
+provide('musicService', musicService)
+
+// Sync with music service
+function updateMusicState(state) {
+  musicState.value = { ...musicState.value, ...state }
+  // Show widget when music starts playing
+  if (state.isPlaying && !showMusicWidget.value) {
+    showMusicWidget.value = true
+  }
+}
+
+onMounted(() => {
+  // Initialize with current state
+  const currentState = musicService.getState()
+  updateMusicState(currentState)
+  
+  // Show widget if music is already playing
+  if (currentState.isPlaying) {
+    showMusicWidget.value = true
+  }
+  
+  // Listen for state changes
+  musicService.addListener(updateMusicState)
+})
+
+onBeforeUnmount(() => {
+  musicService.removeListener(updateMusicState)
+})
 
 function applyTask(payload) {
   // payload: { task, durationSeconds, start, end }
@@ -18,12 +63,66 @@ function applyTask(payload) {
 function onFinished() {
   alert('Hoàn thành!')
 }
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
+
+function toggleMusic() {
+  musicService.toggle()
+}
+
+function closeMusicPlayer() {
+  // Chỉ ẩn widget, không pause nhạc
+  showMusicWidget.value = false
+}
+
+// Music player events
+function onMusicPlay() {
+  musicService.toggle()
+  showMusicWidget.value = true
+}
+
+function onMusicPause() {
+  musicService.toggle()
+}
+
+function onMusicUpdateTime(time) {
+  musicService.seekTo(time)
+}
+
+function onMusicUpdateInfo(info) {
+  musicService.loadAudio(info.url)
+  showMusicWidget.value = true
+}
+
+// New functions for widget controls
+function nextTrack() {
+  musicService.nextTrack()
+}
+
+function previousTrack() {
+  musicService.previousTrack()
+}
+
+function fastForward() {
+  musicService.fastForward(10)
+}
+
+function rewind() {
+  musicService.rewind(10)
+}
 </script>
 
 <template>
   <div class="min-h-screen w-full bg-cover bg-center relative" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop');">
     <!-- Overlay để làm tối nền -->
     <div class="absolute inset-0 bg-black/30"></div>
+    
+    <!-- YouTube Player Container (hidden) - Global for all pages -->
+    <div id="youtube-player" class="hidden"></div>
     
     <!-- Sidebar bên trái -->
     <div class="fixed left-0 top-0 h-full w-16 bg-gradient-to-b from-gray-900/90 to-gray-800/90 backdrop-blur-sm border-r border-white/10 flex flex-col items-center py-6 z-20">
@@ -145,56 +244,114 @@ function onFinished() {
       
       <!-- Music View -->
       <div v-if="currentView === 'music'" class="flex justify-center">
-        <MusicPlayer />
+        <MusicPlayer 
+          @play="onMusicPlay"
+          @pause="onMusicPause"
+          @update-time="onMusicUpdateTime"
+          @update-info="onMusicUpdateInfo"
+        />
       </div>
     </div>
     
-    <!-- Music Player Widget (Bottom Right) -->
-    <div class="fixed bottom-6 right-6 glass p-4 rounded-2xl w-80 z-10">
-      <div class="flex items-center gap-3">
-        <div class="w-12 h-12 bg-gray-600 rounded-lg flex items-center justify-center">
-          <svg fill="white" viewBox="0 0 24 24" class="w-6 h-6">
-            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-          </svg>
+    <!-- Music Player Widget (Bottom Right) - Always visible when playing -->
+    <div v-if="showMusicWidget" class="fixed bottom-6 right-6 glass p-6 rounded-2xl w-96 z-10">
+      <!-- Close button -->
+      <button @click="closeMusicPlayer" class="absolute top-3 right-3 w-6 h-6 text-white/70 hover:text-white transition-colors">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+      </button>
+      
+      <!-- Main content -->
+      <div class="flex items-center gap-4">
+        <!-- Thumbnail -->
+        <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 shadow-lg">
+          <img :src="musicState.thumbnail" :alt="musicState.title" class="w-full h-full object-cover" />
         </div>
-        <div class="flex-1">
-          <div class="font-semibold">Những Cơn Đau Ngày Đi</div>
-          <div class="text-white/70 text-sm">https://www.youtube.com/watc</div>
+        
+        <!-- Song info -->
+        <div class="flex-1 min-w-0">
+          <div class="font-bold text-white text-lg truncate">{{ musicState.title }}</div>
+          <div class="text-white/70 text-sm truncate underline">{{ musicState.url }}</div>
         </div>
-        <div class="flex items-center gap-2">
-          <button class="w-8 h-8 text-white/70 hover:text-white">
-            <svg fill="currentColor" viewBox="0 0 24 24">
+        
+        <!-- Control buttons -->
+        <div class="flex items-center gap-3">
+          <!-- Previous -->
+          <button @click="previousTrack" class="w-10 h-10 text-white/70 hover:text-white transition-colors flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
               <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
             </svg>
           </button>
-          <button class="w-8 h-8 text-white/70 hover:text-white">
-            <svg fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z"/>
+          
+          <!-- Play/Pause -->
+          <button @click="toggleMusic" class="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-white hover:bg-gray-600 transition-colors shadow-lg">
+            <svg fill="currentColor" viewBox="0 0 24 24" class="w-6 h-6">
+              <path v-if="!musicState.isPlaying" d="M8 5v14l11-7z"/>
+              <path v-else d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
             </svg>
           </button>
-          <button class="w-8 h-8 text-white/70 hover:text-white">
-            <svg fill="currentColor" viewBox="0 0 24 24">
+          
+          <!-- Next -->
+          <button @click="nextTrack" class="w-10 h-10 text-white/70 hover:text-white transition-colors flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
               <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
-            </svg>
-          </button>
-          <button class="w-8 h-8 text-white/70 hover:text-white">
-            <svg fill="currentColor" viewBox="0 0 24 24">
-              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-            </svg>
-          </button>
-          <button class="w-8 h-8 text-white/70 hover:text-white">
-            <svg fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
             </svg>
           </button>
         </div>
       </div>
-      <div class="mt-3 flex items-center gap-2">
-        <div class="text-sm text-white/70">01:03</div>
-        <div class="flex-1 bg-white/20 rounded-full h-1">
-          <div class="bg-pink-500 h-1 rounded-full" style="width: 28%"></div>
+      
+      <!-- Progress bar and time -->
+      <div class="mt-4 flex items-center gap-3">
+        <div class="text-sm text-white/70 font-medium w-12">{{ formatTime(musicState.currentTime) }}</div>
+        <div class="flex-1 bg-white/20 rounded-full h-2 relative">
+          <div class="bg-pink-500 h-2 rounded-full transition-all duration-200 relative" :style="{ width: musicState.duration > 0 ? (musicState.currentTime / musicState.duration * 100) + '%' : '0%' }">
+            <!-- Pink dot indicator -->
+            <div class="absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-pink-500 rounded-full shadow-lg"></div>
+          </div>
         </div>
-        <div class="text-sm text-white/70">03:46</div>
+        <div class="text-sm text-white/70 font-medium w-12 text-right">{{ formatTime(musicState.duration) }}</div>
+      </div>
+      
+      <!-- Additional controls -->
+      <div class="mt-4 flex items-center justify-between">
+        <!-- Left side - Rewind/Fast Forward -->
+        <div class="flex items-center gap-2">
+          <button @click="rewind" class="w-8 h-8 text-white/70 hover:text-white transition-colors flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 24 24" class="w-4 h-4">
+              <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+            </svg>
+          </button>
+          <button @click="fastForward" class="w-8 h-8 text-white/70 hover:text-white transition-colors flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 24 24" class="w-4 h-4">
+              <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" transform="scale(-1, 1) translate(-24, 0)"/>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Right side - Loop/Search/Volume -->
+        <div class="flex items-center gap-4">
+          <!-- Loop -->
+          <button class="w-8 h-8 text-white/70 hover:text-white transition-colors flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+              <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+            </svg>
+          </button>
+          
+          <!-- Search -->
+          <button class="w-8 h-8 text-white/70 hover:text-white transition-colors flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+          </button>
+          
+          <!-- Volume (pink/red) -->
+          <button class="w-8 h-8 text-pink-400 hover:text-pink-300 transition-colors flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
